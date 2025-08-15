@@ -1,0 +1,8 @@
+FROM python:3.9-slim
+WORKDIR /app
+COPY export_model.py .
+COPY requirements.txt .
+COPY inference.py .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN python export_model.py
+ENTRYPOINT ["python", "inference.py"]
