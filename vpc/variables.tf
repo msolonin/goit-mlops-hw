@@ -1,14 +1,30 @@
-variable "public_subnet_cidr" {
-  default     = "10.0.1.0/24"
-  description = "CIDR for public subnet"
+variable "vpc_name" {
+  description = "Name of the VPC"
+  type        = string
 }
 
-variable "private_subnet_cidr" {
-  default     = "10.0.2.0/24"
-  description = "CIDR for private subnet"
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  type        = string
 }
 
-variable "availability_zone" {
-  default     = "us-east-1a"
-  description = "Availability Zone для сабнетів"
+variable "availability_zones" {
+  description = "List of availability zones"
+  type        = list(string)
+}
+
+variable "public_subnets" {
+  description = "List of public subnets"
+  type        = list(string)
+}
+
+variable "private_subnets" {
+  description = "List of private subnets"
+  type        = list(string)
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
 }
