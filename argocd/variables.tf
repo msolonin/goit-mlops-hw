@@ -5,9 +5,9 @@ variable "region" {
 }
 
 variable "cluster_name" {
-  description = "EKS cluster name"
+  description = "Name of the EKS cluster"
   type        = string
-  default     = "lesson7-eks"
+  default     = "eks-cluster-msolonin"
 }
 
 variable "namespace" {

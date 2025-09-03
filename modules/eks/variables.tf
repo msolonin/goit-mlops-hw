@@ -16,7 +16,7 @@ variable "node_group_name" {
 }
 variable "instance_type" {
   description = "EC2 instance type for the worker nodes"
-  default     = "t3.micro"
+  default     = "t3.medium"
 }
 variable "desired_size" {
   description = "Desired number of worker nodes"
@@ -24,9 +24,9 @@ variable "desired_size" {
 }
 variable "max_size" {
   description = "Maximum number of worker nodes"
-  default     = 3
+  default     = 10
 }
 variable "min_size" {
   description = "Minimum number of worker nodes"
-  default     = 1
+  default     = 2
 }

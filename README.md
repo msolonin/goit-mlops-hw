@@ -1,12 +1,8 @@
-# Завданння 5
+# Завданння 7
 
-Використовувати модульну структуру Terraform-проєктів;
-Автоматизувати створення VPC та EKS за допомогою готових модулів;
-Навчитися створювати масштабовані node group-и для CPU та GPU задач;
-Працювати з terraform_remote_state, outputs та providers;
-Отримувати доступ до кластера через kubectl одразу після terraform apply.
+Для того щоб задеплоїти апплікейшн mlflow через ArgoCd та GIT
 
-### 1. Для того щоб використати/застосувати Terraform-проєкт:
+### 1. Для того щоб використати/застосувати EKS claster та інші необхідні ресурси (root folder):
 
 ```bash
 terraform init
@@ -14,15 +10,48 @@ terraform plan
 terraform apply
 ```
 
-![terraform_apply.png](pic/terraform_apply.png)
-
-### 2. Перевірка створеного кластера EKS
+### 2. Заходимо в папку argocd та створюемо ArgoCd за допомогою тераформ:
 
 ```bash
-kubectl get nodes
-kubectl get pods --all-namespaces
+cd argocd
+terraform init
+terraform plan
+terraform apply
 ```
 
-![nods.png](pic/nods.png)
+Після цього кластер буде готовий для використання
 
-![pods.png](pic/pods.png)
+![env_ready.png](pics/env_ready.png)
+
+### 3. Заходимо в папку manifest та створюемо storage class:
+
+kubectl apply -f sc.yaml
+
+```bash
+cd manifest
+kubectl apply -f sc.yaml
+```
+
+### 4. Заходимо в папку manifest та піднімаемо APP mlflow з треком репозиторія GIT:
+
+```bash
+cd manifest
+kubectl apply -f mlflow.yaml
+```
+
+Після цього апп створено в ArgoCd та до нього можна доступитися:
+
+![done.png](pics/done.png)
+
+### 5. Знищуемо всі ресурси:
+
+```bash
+cd argocd
+terraform destroy
+```
+
+In root folder:
+
+```bash
+terraform destroy
+```
