@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: grafana
+    targetRevision: 9.4.4
+    helm:
+      parameters:
+        - name: service.type
+          value: ClusterIP
+        - name: service.port
+          value: "3000"
+        - name: adminPassword
+          value: "admin123" # можете замінити через Secret
+        - name: datasources."datasources\.yaml".apiVersion
+          value: "1"
+        - name: datasources."datasources\.yaml".datasources[0].name
+          value: "Prometheus"
+        - name: datasources."datasources\.yaml".datasources[0].type
+          value: "prometheus"
+        - name: datasources."datasources\.yaml".datasources[0].url
+          value: "http://prometheus-server.monitoring.svc.cluster.local"
+        - name: datasources."datasources\.yaml".datasources[0].access
+          value: "proxy"
+        - name: datasources."datasources\.yaml".datasources[0].isDefault
+          value: "true"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

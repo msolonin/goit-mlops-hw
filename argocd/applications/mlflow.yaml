@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mlflow
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: mlflow
+    targetRevision: 5.1.17
+    helm:
+      parameters:
+        - name: backendStore.database.user
+          value: mlflow
+        - name: backendStore.database.password
+          value: mlflow123
+        - name: backendStore.database.database
+          value: mlflow
+        - name: backendStore.database.host
+          value: postgresql.mlops.svc.cluster.local
+        - name: artifactStore.s3.endpoint
+          value: http://minio.mlops.svc.cluster.local:9000
+        - name: artifactStore.s3.bucket
+          value: mlflow-artifacts
+        - name: artifactStore.s3.accessKey
+          value: minioadmin
+        - name: artifactStore.s3.secretKey
+          value: minioadmin
+        - name: service.type
+          value: ClusterIP
+        - name: service.port
+          value: "5000"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
