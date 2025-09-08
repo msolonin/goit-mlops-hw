@@ -45,3 +45,10 @@ provider "helm" {
     token                  = data.aws_eks_cluster_auth.eks.token
   }
 }
+
+module "argo_cd" {
+  source        = "./modules/argo_cd"
+  namespace     = "argocd"
+  chart_version = "5.46.4"
+  depends_on    = [module.eks]
+}

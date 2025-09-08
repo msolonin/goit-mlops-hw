@@ -4,37 +4,55 @@ metadata:
   name: mlflow
   namespace: argocd
 spec:
-  destination:
-    namespace: monitoring
-    server: https://kubernetes.default.svc
   project: default
   source:
-    repoURL: https://charts.bitnami.com/bitnami
+    repoURL: https://community-charts.github.io/helm-charts
     chart: mlflow
-    targetRevision: 5.1.17
+    targetRevision: 1.6.2
     helm:
-      parameters:
-        - name: backendStore.database.user
-          value: mlflow
-        - name: backendStore.database.password
-          value: mlflow123
-        - name: backendStore.database.database
-          value: mlflow
-        - name: backendStore.database.host
-          value: postgresql.mlops.svc.cluster.local
-        - name: artifactStore.s3.endpoint
-          value: http://minio.mlops.svc.cluster.local:9000
-        - name: artifactStore.s3.bucket
-          value: mlflow-artifacts
-        - name: artifactStore.s3.accessKey
-          value: minioadmin
-        - name: artifactStore.s3.secretKey
-          value: minioadmin
-        - name: service.type
-          value: ClusterIP
-        - name: service.port
-          value: "5000"
+      values: |
+        image:
+          repository: docker.io/arturmykhailiuk/mlflow
+          tag: psycopg21
+
+        service:
+          type: ClusterIP
+          port: 5000
+          containerPort: 5000
+
+        backendStore:
+          postgres:
+            enabled: true
+            host: postgres-postgresql.mlflow.svc.cluster.local
+            port: 5432
+            database: mlflow
+            user: mlflow
+            password: mlflowpass
+            driver: psycopg2
+
+        artifactRoot:
+          s3:
+            enabled: true
+            bucket: mlflow-artifacts
+            existingSecret:
+              name: mlflow-secrets
+              keyOfAccessKeyId: AWS_ACCESS_KEY_ID
+              keyOfSecretAccessKey: AWS_SECRET_ACCESS_KEY
+
+        auth:
+          enabled: false   # або true, якщо робиш basic-auth
+
+        extraEnvVars:
+          MLFLOW_S3_ENDPOINT_URL: http://minio.mlflow.svc.cluster.local:9000
+          MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:mlflowpass@postgres-postgresql.mlflow.svc.cluster.local:5432/mlflow
+          MLFLOW_ARTIFACT_ROOT: s3://mlflow-artifacts
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mlflow
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
