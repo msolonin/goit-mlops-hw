@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  labels:
+    app: monitoring
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 45.5.0
+    helm:
+      values: |
+        namespaceOverride: monitoring
+
+        # Prometheus settings
+        prometheus:
+          service:
+            type: ClusterIP
+          prometheusSpec:
+            replicas: 1
+            retention: 10d
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelector:
+              matchLabels:
+                release: monitoring
+
+        # Grafana settings
+        grafana:
+          enabled: true
+          service:
+            type: ClusterIP
+          adminPassword: admin
+          defaultDashboardsEnabled: true
+
+        # Alertmanager settings
+        alertmanager:
+          enabled: true
+          service:
+            type: ClusterIP
+          alertmanagerSpec:
+            replicas: 1
+
+        # Pushgateway settings
+        pushgateway:
+          enabled: true
+          service:
+            type: ClusterIP
+          serviceMonitor:
+            enabled: true
+            interval: 15s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
