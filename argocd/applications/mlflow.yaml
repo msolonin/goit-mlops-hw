@@ -34,18 +34,14 @@ spec:
           s3:
             enabled: true
             bucket: mlflow-artifacts
-            existingSecret:
+            accessKey: minio
+            secretKey: minio123
+            endpointUrl: http://minio.mlflow.svc.cluster.local:9000
+
+        # підключаємо секрет mlflow-secrets
+        extraEnvFrom:
+          - secretRef:
               name: mlflow-secrets
-              keyOfAccessKeyId: AWS_ACCESS_KEY_ID
-              keyOfSecretAccessKey: AWS_SECRET_ACCESS_KEY
-
-        auth:
-          enabled: false   # або true, якщо робиш basic-auth
-
-        extraEnvVars:
-          MLFLOW_S3_ENDPOINT_URL: http://minio.mlflow.svc.cluster.local:9000
-          MLFLOW_BACKEND_STORE_URI: postgresql://mlflow:mlflowpass@postgres-postgresql.mlflow.svc.cluster.local:5432/mlflow
-          MLFLOW_ARTIFACT_ROOT: s3://mlflow-artifacts
   destination:
     server: https://kubernetes.default.svc
     namespace: mlflow
