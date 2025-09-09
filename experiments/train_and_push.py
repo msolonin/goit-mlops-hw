@@ -7,26 +7,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, log_loss
 
-# ==========================
-# Environment Setup
-# ==========================
-# MLflow tracking
+
 MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5001")
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment("iris-experiment")
-
-# MLflow artifact storage (local MinIO port-forwarded)
 os.environ["AWS_ACCESS_KEY_ID"] = "minio"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "minio123"
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
 os.environ["MLFLOW_ARTIFACT_ROOT"] = "s3://mlflow-artifacts"
 
-# Prometheus PushGateway
 PUSHGATEWAY_URL = "http://localhost:9091"
 
-# ==========================
-# Load dataset
-# ==========================
+
 X, y = load_iris(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
@@ -35,9 +27,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 best_acc = 0
 best_run = None
 
-# ==========================
-# Train and log models
-# ==========================
+
 for lr in [0.01, 0.1, 1.0]:
     for epochs in [50, 100, 200]:
         print(f"Training model with lr={lr}, epochs={epochs}")

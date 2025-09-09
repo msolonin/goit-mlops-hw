@@ -8,11 +8,11 @@ spec:
   source:
     repoURL: https://community-charts.github.io/helm-charts
     chart: mlflow
-    targetRevision: 1.6.2
+    targetRevision: 0.6.2
     helm:
       values: |
         image:
-          repository: docker.io/arturmykhailiuk/mlflow
+          repository: docker.io/msolonin/mlflow
           tag: psycopg21
 
         service:

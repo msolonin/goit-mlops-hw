@@ -51,6 +51,8 @@ spec:
           serviceMonitor:
             enabled: true
             interval: 15s
+            labels:
+              release: monitoring
 
   destination:
     server: https://kubernetes.default.svc

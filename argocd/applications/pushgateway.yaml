@@ -13,6 +13,9 @@ spec:
       values: |
         service:
           type: ClusterIP
+        serviceMonitor:
+          enabled: true
+          interval: 15s
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

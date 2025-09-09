@@ -2,7 +2,7 @@
 
 Для того щоб задеплоїти апплікейшн mlflow через ArgoCd та GIT
 
-### 1. Для того щоб використати/застосувати EKS claster та інші необхідні ресурси (root folder):
+### 1. Для того щоб використати/застосувати EKS claster,VPC, argocd та інші необхідні ресурси :
 
 ```bash
 terraform init
@@ -10,47 +10,52 @@ terraform plan
 terraform apply
 ```
 
-### 2. Заходимо в папку argocd та створюемо ArgoCd за допомогою тераформ:
+### 2. Створюемо всі необхідні апп в класері:
 
 ```bash
-cd argocd
-terraform init
-terraform plan
-terraform apply
+kubectl apply -f argocd/applications
 ```
 
-Після цього кластер буде готовий для використання
+Після цього перевірити що всі апп готові до використання
 
-![env_ready.png](pics/env_ready.png)
+![all_app.png](pics/all_app.png)
 
-### 3. Заходимо в папку manifest та створюемо storage class:
-
-kubectl apply -f sc.yaml
+### 3. Перенаправляемо всі порти що нам потрібні(mlflow, pushgateway, prometheus, grafana):
 
 ```bash
-cd manifest
-kubectl apply -f sc.yaml
+kubectl port-forward svc/mlflow -n mlflow 5001:5000
+kubectl port-forward svc/pushgateway-prometheus-pushgateway -n monitoring 9091:9091
+kubectl port-forward svc/kube-prometheus-stack-prometheus -n monitoring 9090:9090
+kubectl port-forward svc/kube-prometheus-stack-grafana -n monitoring 3000:80
+
 ```
 
-### 4. Заходимо в папку manifest та піднімаемо APP mlflow з треком репозиторія GIT:
+### 4. Ставимо всі залежності та запускаемо локально скрипт:
 
 ```bash
-cd manifest
-kubectl apply -f mlflow.yaml
+pip install -r experiments/requirements.txt
+python3 experiments/train_and_push.py
 ```
 
-Після цього апп створено в ArgoCd та до нього можна доступитися:
+### 5. Перевіряемо що дані передаються в mlflow та grafana черз pushgateway -> prometheus:
 
-![done.png](pics/done.png)
+## localhost:9090
 
-### 5. Знищуемо всі ресурси:
+![prometheus.png](pics/prometheus.png)
 
-```bash
-cd argocd
-terraform destroy
-```
+## localhost:5000
 
-In root folder:
+![mlflow_exp.png](pics/mlflow_exp.png)
+
+## localhost:3000
+
+![grafana.png](pics/grafana.png)
+
+### 6. Перевіряемо що найкраща модель записна в папці(best_model):
+
+![artifact.png](pics/artifact.png)
+
+### 7. Знищуемо всі ресурси:
 
 ```bash
 terraform destroy
