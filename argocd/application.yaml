@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: "https://gitlab.com/msolonin/mlops-goit-hw"
-    targetRevision: main
+    targetRevision: lesson-fp
     path: helm
   destination:
     server: "https://kubernetes.default.svc"

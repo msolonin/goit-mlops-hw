@@ -1,15 +1,32 @@
+# FastAPI deployment values
 replicaCount: 1
-
 image:
-  repository: registry.example.com/aiops-quality-project
+  repository: 020236748758.dkr.ecr.us-east-1.amazonaws.com/aiops-quality-project
   tag: latest
-  pullPolicy: IfNotPresent
-
 service:
   type: ClusterIP
   port: 8000
 
-resources: {}
-nodeSelector: {}
-tolerations: []
-affinity: {}
+# Prometheus/Grafana (via kube-prometheus-stack)
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    adminUser: admin
+    adminPassword: admin123
+    service:
+      type: ClusterIP
+      port: 3000
+  prometheus:
+    prometheusSpec:
+      scrapeInterval: 15s
+  alertmanager:
+    enabled: false
+
+# Loki + Promtail
+loki-stack:
+  grafana:
+    enabled: false # we already have Grafana in kube-prometheus-stack
+  loki:
+    enabled: true
+  promtail:
+    enabled: true

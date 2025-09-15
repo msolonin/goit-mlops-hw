@@ -1,25 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { include "aiops-quality-project.fullname" . } }
+  name: {{ include "aiops-quality-project.fullname" . }}
   labels:
-    app: { { include "aiops-quality-project.name" . } }
+    app: {{ include "aiops-quality-project.name" . }}
 spec:
-  replicas: { { .Values.replicaCount } }
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: { { include "aiops-quality-project.name" . } }
+      app: {{ include "aiops-quality-project.name" . }}
   template:
     metadata:
       labels:
-        app: { { include "aiops-quality-project.name" . } }
+        app: {{ include "aiops-quality-project.name" . }}
     spec:
       containers:
         - name: fastapi
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: { { .Values.image.pullPolicy } }
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8000
+            - containerPort: 8000   # FastAPI
+            - containerPort: 8001   # Metrics
           env:
             - name: MODEL_PATH
               value: /app/model/model.pkl
