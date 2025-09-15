@@ -1,14 +1,21 @@
-image: python:3.11-slim
-
 stages:
   - train
+  - build
+  - deploy
 
-train-model:
+retrain-model:
   stage: train
   script:
-    - pip install --upgrade awscli
-    - aws --version
-    - echo "Starting Step Function execution..."
-    - aws stepfunctions start-execution --state-machine-arn "$STATE_MACHINE_ARN" --name "train-${CI_COMMIT_SHORT_SHA}-$(date +%s)" --input '{"source":"gitlab-ci","commit":"'"$CI_COMMIT_SHORT_SHA"'"}'
-  rules:
-    - if: "$CI_COMMIT_BRANCH"
+    - python model/train.py
+    - docker build -t registry.example.com/aiops-quality-project:$CI_COMMIT_SHORT_SHA .
+    - docker push registry.example.com/aiops-quality-project:$CI_COMMIT_SHORT_SHA
+  artifacts:
+    paths:
+      - model/model.pkl
+  only:
+    - triggers
+
+deploy:
+  stage: deploy
+  script:
+    - helm upgrade --install aiops helm/ --namespace aiops --values helm/values.yaml --values helm/values-secrets.example.yaml --set image.tag=$CI_COMMIT_SHORT_SHA

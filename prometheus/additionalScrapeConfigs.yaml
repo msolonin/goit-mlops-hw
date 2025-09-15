@@ -1,0 +1,4 @@
+- job_name: "aiops-quality-project"
+  metrics_path: /metrics
+  static_configs:
+    - targets: ["aiops-quality-project:8001"]

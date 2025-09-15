@@ -1,0 +1,35 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AIops Quality Project",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Request Rate",
+        "targets": [
+          {
+            "expr": "rate(aiops_requests_total[1m])"
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Latency",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(aiops_request_latency_seconds_bucket[5m])) by (le))"
+          }
+        ]
+      },
+      {
+        "type": "stat",
+        "title": "Drift Detected",
+        "targets": [
+          {
+            "expr": "increase(aiops_drift_detected_total[5m])"
+          }
+        ]
+      }
+    ]
+  }
+}
