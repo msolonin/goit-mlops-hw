@@ -1,37 +1,104 @@
 stages:
-  - train
+  - prep
   - build
-  - deploy
+  - argo
 
-variables:
-  DOCKER_IMAGE: 020236748758.dkr.ecr.us-east-1.amazonaws.com/aiops-quality-project
+default:
+  tags: []
 
-retrain-model:
-  stage: train
-  image: docker:latest
+workflow:
+  rules:
+    # Trigger if key files change
+    - changes:
+        - Dockerfile
+        - app/**/*
+        - model/**/*
+        - helm/**/*
+        - .gitlab-ci.yml
+      when: always
+    # Trigger if pipeline started by external trigger
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: always
+    # Do not trigger otherwise
+    - when: never
+
+prep-step:
+  stage: prep
+  script:
+    - echo "$DOCKER_IMAGE_NAME"
+
+docker-build:
+  stage: build
+  image: docker:24.0
+  tags: []
   services:
-    - docker:dind
+    - docker:24.0-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_BUILDKIT: "1"
+    BUILDKIT_PROGRESS: plain
+    DOCKER_REGISTRY: "${CI_REGISTRY}"
+    DOCKER_IMAGE_NAME: "${CI_REGISTRY_IMAGE}/aiops-quality-project"
+    DOCKER_BUILD_CONTEXT: "."
+  rules:
+    - changes:
+        - Dockerfile
+        - app/**/*
+        - model/**/*
+        - helm/**/*
+        - .gitlab-ci.yml
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+      when: always
+    - when: never
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
   script:
-    - apk add --no-cache python3 py3-pip
-    - pip install -r requirements.txt
-    - python model/train.py
-    - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-  artifacts:
+    - docker build
+      --pull
+      --build-arg BUILDKIT_INLINE_CACHE=1
+      --cache-from "${DOCKER_IMAGE_NAME}:latest"
+      --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+      --label "org.opencontainers.image.version=${CI_PIPELINE_ID}"
+      --label "org.opencontainers.image.revision=${CI_COMMIT_SHA}"
+      --label "org.opencontainers.image.source=${CI_PROJECT_URL}"
+      --label "build.gitlab.ci.pipeline=${CI_PIPELINE_ID}"
+      --label "build.gitlab.ci.commit=${CI_COMMIT_SHA}"
+      --label "build.gitlab.ci.branch=${CI_COMMIT_REF_NAME}"
+      --label "build.date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+      -t "${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID}"
+      -t "${DOCKER_IMAGE_NAME}:latest"
+      "${DOCKER_BUILD_CONTEXT}"
+    - docker push "${DOCKER_IMAGE_NAME}:${CI_PIPELINE_ID}"
+    - docker push "${DOCKER_IMAGE_NAME}:latest"
+    - echo "IMAGE_TAG=${CI_PIPELINE_ID}" > image.tag.env
+  after_script:
+    - docker logout "$CI_REGISTRY"
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - model/model.pkl
-  only:
-    - triggers
+      - "${DOCKER_BUILD_CONTEXT}/.docker-cache"
+  artifacts:
+    reports:
+      dotenv: image.tag.env
 
-deploy:
-  stage: deploy
-  image: alpine/helm:3.12.0
+argo-vars-update:
+  image: registry.gitlab.com/gitlab-org/cli:latest
+  stage: argo
+  needs:
+    - job: docker-build
+      artifacts: true
+  before_script:
+    - git remote set-url origin "https://gitlab-ci-token:${CI_PUSH_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git"
+    - git config user.name "GitLab CI"
+    - git config user.email "gitlab-ci@gitlab.com"
+    - git checkout -B $CI_COMMIT_BRANCH
   script:
-    - helm repo update
-    - helm upgrade --install aiops helm/ \
-      --namespace aiops \
-      --values helm/values.yaml \
-      --values helm/values-secrets.example.yaml \
-      --set image.tag=$CI_COMMIT_SHORT_SHA
-  only:
-    - triggers
+    - sed -i 's/^\(\s*tag:\).*/\1 "'${IMAGE_TAG}'"/' helm/values.yaml
+    - cat helm/values.yaml
+    - git add helm/values.yaml
+    - git commit -m "Update application version to ${IMAGE_TAG} [skip ci]" || echo "No changes to commit"
+    - git push origin $CI_COMMIT_BRANCH
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
