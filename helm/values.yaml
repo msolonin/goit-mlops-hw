@@ -66,55 +66,7 @@ readinessProbe:
     port: http
   initialDelaySeconds: 30
   periodSeconds: 10
-
-  - name: kube-prometheus-stack
-    namespace: argocd
-    project: default
-    source:
-      repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 45.5.0
-      helm:
-        values: |
-          namespaceOverride: monitoring
-          prometheus:
-            service:
-              type: ClusterIP
-            prometheusSpec:
-              replicas: 1
-              retention: 10d
-              serviceMonitorSelectorNilUsesHelmValues: false
-              serviceMonitorSelector:
-                matchLabels:
-                  release: monitoring
-          grafana:
-            enabled: true
-            service:
-              type: ClusterIP
-            adminPassword: admin
-            defaultDashboardsEnabled: true
-          alertmanager:
-            enabled: true
-            service:
-              type: ClusterIP
-            alertmanagerSpec:
-              replicas: 1
-          pushgateway:
-            enabled: true
-            service:
-              type: ClusterIP
-            serviceMonitor:
-              enabled: true
-              interval: 15s
-              labels:
-                release: monitoring
-    destination:
-      server: https://kubernetes.default.svc
-      namespace: monitoring
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: true
-      syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
+# kubectl create secret docker-registry gitlab-registry \
+#   --docker-username=gitlab-ci-token  \
+#   --docker-password="${GITLAB_TOKEN}" \
+#   --docker-server=registry.gitlab.com
