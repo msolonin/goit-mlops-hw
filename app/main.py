@@ -1,4 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks
+from fastapi.responses import Response
 from pydantic import BaseModel
 import uvicorn
 import os
@@ -122,7 +123,7 @@ def async_check_drift(features):
 
 @app.get('/metrics')
 def metrics():
-    return generate_latest()
+    return Response(content=generate_latest(), media_type="text/plain")
 
 if __name__ == '__main__':
     uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))

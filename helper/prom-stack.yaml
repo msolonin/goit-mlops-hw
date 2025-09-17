@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: "https://prometheus-community.github.io/helm-charts"
+    chart: kube-prometheus-stack
+    targetRevision: 77.0.2
+    helm:
+      valuesObject:
+        grafana:
+          ingress:
+            enabled: false
+          service:
+            type: LoadBalancer
+        prometheus:
+          ingress:
+            enabled: false
+        alertmanager:
+          enabled: false
+        prometheusOperator:
+          createCustomResource: true
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

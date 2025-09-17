@@ -1,0 +1,81 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: 6.38.0
+    helm:
+      values: |
+        loki:
+          auth_enabled: false
+          schemaConfig:
+            configs:
+              - from: 2024-04-01
+                store: tsdb
+                object_store: s3
+                schema: v13
+                index:
+                  prefix: loki_index_
+                  period: 24h
+          ingester:
+            chunk_encoding: snappy
+          tracing:
+            enabled: true
+          querier:
+            max_concurrent: 2
+        deploymentMode: SimpleScalable
+        backend:
+          replicas: 2
+        read:
+          replicas: 2
+        write:
+          replicas: 2
+        minio:
+          enabled: true
+        singleBinary:
+          replicas: 0
+
+        ingester:
+          replicas: 0
+        querier:
+          replicas: 0
+        queryFrontend:
+          replicas: 0
+        queryScheduler:
+          replicas: 0
+        distributor:
+          replicas: 0
+        compactor:
+          replicas: 0
+        indexGateway:
+          replicas: 0
+        bloomCompactor:
+          replicas: 0
+        bloomGateway:
+          replicas: 0
+        chunksCache:
+          batchSize: 4
+          parallelism: 3
+          timeout: 2000ms
+          defaultValidity: 0s
+          replicas: 1
+          port: 11211
+          allocatedMemory: 2048
+          maxItemMemory: 5
+          connectionLimit: 4096
+          writebackSizeLimit: 500MB
+          writebackBuffer: 50000
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

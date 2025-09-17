@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: promtail
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: "https://kubernetes.default.svc"
+  project: default
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: promtail
+    targetRevision: 6.16.6
+    helm:
+      valuesObject:
+        config:
+          clients:
+            - url: http://loki-write.monitoring.svc.cluster.local:3100/loki/api/v1/push
+          snippets:
+            pipelineStages:
+              - cri: {}
+        tolerations:
+          - key: usage
+            operator: Equal
+            value: infrastructure
+            effect: NoSchedule
+        resources:
+          limits:
+            cpu: 80m
+            memory: 128Mi
+          requests:
+            cpu: 20m
+            memory: 64Mi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
