@@ -6,8 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "https://gitlab.com/msolonin/mlops-goit-hw"
-    targetRevision: lesson-fp
+    repoURL: "https://github.com/msolonin/goit-mlops-hw"
+    targetRevision: final-project"
     path: helm
   destination:
     server: "https://kubernetes.default.svc"

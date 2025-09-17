@@ -1,7 +1,7 @@
 # FastAPI deployment values
 replicaCount: 1
 image:
-  repository: 020236748758.dkr.ecr.us-east-1.amazonaws.com/aiops-quality-project
+  repository: registry.gitlab.com/msolonin/mlops-goit-hw/aiops-quality-project
   tag: latest
 service:
   type: ClusterIP
@@ -30,3 +30,5 @@ loki-stack:
     enabled: true
   promtail:
     enabled: true
+secrets:
+  gitlabRetrainWebhookToken: "glptt-bb79d563f2401f8ffd7089d4d53111a4ed580909"
