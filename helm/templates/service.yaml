@@ -1,16 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "aiops-quality-project.fullname" . }}
+  name: {{ include "exampleapp.fullname" . }}
   labels:
-    app: {{ include "aiops-quality-project.name" . }}
+    {{- include "exampleapp.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - name: metrics   # 👈 must match ServiceMonitor
-      port: {{ .Values.service.port }}
-      targetPort: 8000
+    - port: {{ .Values.service.port }}
+      targetPort: http
       protocol: TCP
+      name: http
   selector:
-    app: {{ include "aiops-quality-project.name" . }}
-
+    {{- include "exampleapp.selectorLabels" . | nindent 4 }}

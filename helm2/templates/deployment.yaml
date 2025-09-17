@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aiops-quality-project.fullname" . }}
+  labels:
+    app: {{ include "aiops-quality-project.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "aiops-quality-project.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "aiops-quality-project.name" . }}
+    spec:
+      containers:
+        - name: fastapi
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000   # FastAPI Metrics & Health
+          env:
+            - name: MODEL_PATH
+              value: /app/model/model.pkl
+            - name: GITLAB_RETRAIN_WEBHOOK
+              valueFrom:
+                secretKeyRef:
+                  name: aiops-secrets
+                  key: GITLAB_RETRAIN_WEBHOOK
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

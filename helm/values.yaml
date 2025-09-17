@@ -1,34 +1,72 @@
-# FastAPI deployment values
+# Default values for exampleapp
 replicaCount: 1
+
 image:
   repository: registry.gitlab.com/msolonin/mlops-goit-hw/aiops-quality-project
-  tag: latest
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets:
+  - name: gitlab-registry
+
+nameOverride: ""
+fullnameOverride: ""
+
 service:
   type: ClusterIP
   port: 8000
 
-# Prometheus/Grafana (via kube-prometheus-stack)
-kube-prometheus-stack:
-  grafana:
-    enabled: true
-    adminUser: admin
-    adminPassword: admin123
-    service:
-      type: ClusterIP
-      port: 3000
-  prometheus:
-    prometheusSpec:
-      scrapeInterval: 15s
-  alertmanager:
-    enabled: false
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
 
-# Loki + Promtail
-loki-stack:
-  grafana:
-    enabled: false # we already have Grafana in kube-prometheus-stack
-  loki:
-    enabled: true
-  promtail:
-    enabled: true
-secrets:
-  gitlabRetrainWebhookToken: "glptt-bb79d563f2401f8ffd7089d4d53111a4ed580909"
+# Simple pod-level configuration
+podAnnotations: {}
+podLabels: {}
+
+# Basic container configuration
+containerPort: 8000
+
+# Environment variables
+env:
+  # Common environment variables
+  common:
+    HOST: "0.0.0.0"
+    PORT: "8000"
+    LOG_LEVEL: "INFO"
+
+  # Model-specific environment variables
+  model:
+    MODEL_NAME: "exammple model Linear Regression"
+    MODEL_VERSION: "1.1.0"
+    MODEL_PATH: "app/model/model.pkl"
+
+  # Additional environment variables (optional)
+  extra: {}
+
+# Secret environment variables (optional)
+envSecrets: {}
+
+# ConfigMap environment variables (optional)
+envConfigMaps: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+# kubectl create secret docker-registry gitlab-registry \
+#   --docker-username=gitlab-ci-token  \
+#   --docker-password="${GITLAB_TOKEN}" \
+#   --docker-server=registry.gitlab.com

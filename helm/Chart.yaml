@@ -1,14 +1,6 @@
 apiVersion: v2
-name: aiops-quality-project
-description: Helm chart for FastAPI inference service with monitoring and logging
+name: exampleapp
+description: A Helm chart for Example ML Application
 type: application
-version: 0.2.0
+version: 0.1.0
 appVersion: "1.0.0"
-
-dependencies:
-  - name: kube-prometheus-stack
-    version: "77.6.2"
-    repository: "https://prometheus-community.github.io/helm-charts"
-  - name: loki-stack
-    version: "2.10.2"
-    repository: "https://grafana.github.io/helm-charts"

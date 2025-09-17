@@ -1,42 +1,83 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "aiops-quality-project.fullname" . }}
+  name: {{ include "exampleapp.fullname" . }}
   labels:
-    app: {{ include "aiops-quality-project.name" . }}
+    {{- include "exampleapp.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "aiops-quality-project.name" . }}
+      {{- include "exampleapp.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app: {{ include "aiops-quality-project.name" . }}
+        {{- include "exampleapp.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
-        - name: fastapi
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8000   # FastAPI Metrics & Health
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          
+          # Environment variables from values
           env:
-            - name: MODEL_PATH
-              value: /app/model/model.pkl
-            - name: GITLAB_RETRAIN_WEBHOOK
+            # Common environment variables
+            {{- range $key, $value := .Values.env.common }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            
+            # Model-specific environment variables
+            {{- range $key, $value := .Values.env.model }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            
+            # Additional environment variables
+            {{- range $key, $value := .Values.env.extra }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            
+            # Environment variables from Secrets
+            {{- range $secretName, $secretConfig := .Values.envSecrets }}
+            {{- range $key, $value := $secretConfig }}
+            - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: aiops-secrets
-                  key: GITLAB_RETRAIN_WEBHOOK
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+                  name: {{ $secretName }}
+                  key: {{ $value }}
+            {{- end }}
+            {{- end }}
+            
+            # Environment variables from ConfigMaps
+            {{- range $configMapName, $configMapConfig := .Values.envConfigMaps }}
+            {{- range $key, $value := $configMapConfig }}
+            - name: {{ $key }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $configMapName }}
+                  key: {{ $value }}
+            {{- end }}
+            {{- end }}
