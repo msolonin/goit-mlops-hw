@@ -12,11 +12,11 @@ module "vpc" {
   vpc_name           = var.vpc_name  
 }
 
-module "ecr" {
-  source = "./modules/ecr"
-  repository_name = var.repository_name          # Ім'я репозиторію
-  scan_on_push    = true                         # true → увімкнути
-}
+# module "ecr" {
+#   source = "./modules/ecr"
+#   repository_name = var.repository_name          # Ім'я репозиторію
+#   scan_on_push    = true                         # true → увімкнути
+# }
 
 module "eks" {
   source        = "./modules/eks"
