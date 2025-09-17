@@ -19,8 +19,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 8000   # FastAPI
-            - containerPort: 8001   # Metrics
+            - containerPort: 8000   # FastAPI Metrics & Health
           env:
             - name: MODEL_PATH
               value: /app/model/model.pkl
@@ -29,3 +28,15 @@ spec:
                 secretKeyRef:
                   name: aiops-secrets
                   key: GITLAB_RETRAIN_WEBHOOK
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
