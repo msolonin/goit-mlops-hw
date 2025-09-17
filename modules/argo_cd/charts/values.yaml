@@ -4,8 +4,8 @@ applications:
     project: default
     source:
       repoURL: "https://github.com/msolonin/goit-mlops-hw"
-      path: charts/django-app
-      targetRevision: lesson-fp
+      path: helm
+      targetRevision: "final-project"
       helm:
         valueFiles:
           - values.yaml
